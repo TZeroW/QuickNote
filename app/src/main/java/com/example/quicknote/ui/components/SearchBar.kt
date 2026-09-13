@@ -40,12 +40,10 @@ fun QuickNoteHeader(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        // App title row
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // App icon
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -78,7 +76,6 @@ fun QuickNoteHeader(
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        // Search Bar Input (Cleaned without mic, extra search button, profile, or 3 dots)
         Row(
             modifier = Modifier
                 .fillMaxWidth()

@@ -1,7 +1,6 @@
 package com.example.quicknote.ui.theme
 
 import android.app.Activity
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
@@ -27,7 +26,7 @@ private val DarkColorScheme = darkColorScheme(
 
 @Composable
 fun QuickNoteTheme(
-    darkTheme: Boolean = true, // Force sleek dark theme to match screenshots
+    darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = DarkColorScheme

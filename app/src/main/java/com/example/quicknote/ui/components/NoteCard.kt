@@ -172,13 +172,11 @@ fun NoteCardContent(
             .padding(18.dp)
     ) {
         if (note.isTask) {
-            // Task/List style layout showing Title on top and added Sub-tasks underneath
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .alpha(textAlpha)
             ) {
-                // Top row: Main Task Checkbox, Date & Pin Icon
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
@@ -228,7 +226,6 @@ fun NoteCardContent(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Title of the Task List
                 Text(
                     text = note.title,
                     fontSize = 18.sp,
@@ -237,7 +234,6 @@ fun NoteCardContent(
                     textDecoration = if (note.isCompleted) TextDecoration.LineThrough else TextDecoration.None
                 )
 
-                // Render Sub-tasks / Todo Items added under the title
                 if (note.todoItems.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(10.dp))
                     Column(
@@ -290,7 +286,6 @@ fun NoteCardContent(
                             }
                         }
 
-                        // "Ver más" / "Ver menos" toggle if sub-tasks > 5
                         if (note.todoItems.size > 5) {
                             val remaining = note.todoItems.size - 5
                             Box(
@@ -322,7 +317,6 @@ fun NoteCardContent(
                 }
             }
         } else {
-            // Standard Note style layout
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top
@@ -378,7 +372,6 @@ fun NoteCardContent(
                     }
                 }
 
-                // Image Thumbnail if available
                 if (note.imageUri != null) {
                     Box(
                         modifier = Modifier

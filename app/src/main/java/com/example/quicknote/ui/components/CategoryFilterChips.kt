@@ -2,6 +2,7 @@ package com.example.quicknote.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +25,6 @@ import com.example.quicknote.ui.theme.DarkSurfaceVariant
 import com.example.quicknote.ui.theme.OnPrimaryCyan
 import com.example.quicknote.ui.theme.PrimaryCyan
 import com.example.quicknote.ui.theme.TextMuted
-import com.example.quicknote.ui.theme.TextPrimary
 import com.example.quicknote.ui.theme.TextSecondary
 import com.example.quicknote.ui.viewmodel.FilterCategory
 
@@ -38,6 +39,7 @@ fun CategoryFilterChips(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically

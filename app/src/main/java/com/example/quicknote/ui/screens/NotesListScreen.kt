@@ -87,6 +87,14 @@ fun NotesListScreen(
         label = "fabRotation"
     )
 
+    val handleNoteSelect = { noteId: Long ->
+        if (onNoteSelectedMasterDetail != null) {
+            onNoteSelectedMasterDetail(noteId)
+        } else {
+            onNoteClick(noteId)
+        }
+    }
+
     Scaffold(
         containerColor = DarkBackground,
         floatingActionButton = {
@@ -95,7 +103,6 @@ fun NotesListScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.padding(bottom = 16.dp, end = 8.dp)
             ) {
-                // Expandable Options Menu
                 AnimatedVisibility(
                     visible = isFabMenuExpanded,
                     enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }),
@@ -105,7 +112,6 @@ fun NotesListScreen(
                         horizontalAlignment = Alignment.End,
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        // Option 1: Nueva Lista de Tareas
                         FabMenuOption(
                             label = "Nueva Lista",
                             icon = Icons.Default.Checklist,
@@ -115,7 +121,6 @@ fun NotesListScreen(
                             }
                         )
 
-                        // Option 2: Nueva Nota de Texto
                         FabMenuOption(
                             label = "Nueva Nota",
                             icon = Icons.Default.EditNote,
@@ -127,7 +132,6 @@ fun NotesListScreen(
                     }
                 }
 
-                // Main FAB (+) button with smooth rotation animation
                 FloatingActionButton(
                     onClick = { isFabMenuExpanded = !isFabMenuExpanded },
                     containerColor = PrimaryCyan,
@@ -157,13 +161,11 @@ fun NotesListScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Header Bar (Title, Search)
                 QuickNoteHeader(
                     searchQuery = searchQuery,
                     onQueryChange = { viewModel.onSearchQueryChanged(it) }
                 )
 
-                // Filter Category Chips (Todas, Notas, Pendientes)
                 CategoryFilterChips(
                     selectedCategory = selectedCategory,
                     totalCount = totalCount,
@@ -177,7 +179,6 @@ fun NotesListScreen(
                 if (notes.isEmpty()) {
                     EmptyNotesState()
                 } else if (isWideScreen) {
-                    // Responsive Grid Layout for Tablets / Wide screen / Landscape
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 300.dp),
                         contentPadding = PaddingValues(16.dp),
@@ -188,13 +189,7 @@ fun NotesListScreen(
                         items(notes, key = { it.id }) { note ->
                             SwipeableNoteCard(
                                 note = note,
-                                onClick = {
-                                    if (onNoteSelectedMasterDetail != null) {
-                                        onNoteSelectedMasterDetail(note.id)
-                                    } else {
-                                        onNoteClick(note.id)
-                                    }
-                                },
+                                onClick = { handleNoteSelect(note.id) },
                                 onToggleCompleted = { viewModel.toggleTaskCompleted(note) },
                                 onToggleTodoItem = { todoId -> viewModel.toggleSubTask(note, todoId) },
                                 onDelete = { viewModel.deleteNote(note) }
@@ -202,7 +197,6 @@ fun NotesListScreen(
                         }
                     }
                 } else {
-                    // 1-Column List for Mobile Smartphones
                     LazyColumn(
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -211,7 +205,7 @@ fun NotesListScreen(
                         items(notes, key = { it.id }) { note ->
                             SwipeableNoteCard(
                                 note = note,
-                                onClick = { onNoteClick(note.id) },
+                                onClick = { handleNoteSelect(note.id) },
                                 onToggleCompleted = { viewModel.toggleTaskCompleted(note) },
                                 onToggleTodoItem = { todoId -> viewModel.toggleSubTask(note, todoId) },
                                 onDelete = { viewModel.deleteNote(note) }

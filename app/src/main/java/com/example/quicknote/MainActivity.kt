@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,10 +57,16 @@ fun QuickNoteApp(viewModel: NotesViewModel) {
         val isTablet = maxWidth > 840.dp
 
         if (isTablet) {
-            // Adaptive Master-Detail Layout for Tablets / Wide Screens
-            var selectedNoteId by remember { mutableStateOf<Long?>(1L) }
+            val notes by viewModel.allNotes.collectAsState()
+            var selectedNoteId by remember { mutableStateOf<Long?>(null) }
             var initialIsTask by remember { mutableStateOf(false) }
             var zoomImageUri by remember { mutableStateOf<String?>(null) }
+
+            LaunchedEffect(notes) {
+                if (selectedNoteId == null && notes.isNotEmpty()) {
+                    selectedNoteId = notes.first().id
+                }
+            }
 
             if (zoomImageUri != null) {
                 ImageZoomScreen(
@@ -111,7 +119,6 @@ fun QuickNoteApp(viewModel: NotesViewModel) {
                 }
             }
         } else {
-            // Single Pane NavHost for Mobile Smartphones
             val navController = rememberNavController()
 
             NavHost(

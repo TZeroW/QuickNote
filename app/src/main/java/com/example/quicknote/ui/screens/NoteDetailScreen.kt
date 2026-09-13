@@ -6,6 +6,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -41,11 +44,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,7 +60,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import com.example.quicknote.data.Note
 import com.example.quicknote.data.TodoItem
 import com.example.quicknote.ui.components.SampleMoodboardThumbnail
 import com.example.quicknote.ui.theme.DarkBackground
@@ -69,8 +71,6 @@ import com.example.quicknote.ui.theme.TextMuted
 import com.example.quicknote.ui.theme.TextPrimary
 import com.example.quicknote.ui.theme.TextSecondary
 import com.example.quicknote.ui.viewmodel.NotesViewModel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import java.util.UUID
 
 @Composable
@@ -81,24 +81,20 @@ fun NoteDetailScreen(
     onBackClick: () -> Unit,
     onImageClick: (String) -> Unit
 ) {
-    val coroutineScope = rememberCoroutineScope()
-
-    var currentNoteId by remember { mutableStateOf(noteId) }
+    var currentNoteId by remember(noteId) { mutableStateOf(noteId) }
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<String?>(null) }
     var isTask by remember { mutableStateOf(initialIsTask) }
     var isPinned by remember { mutableStateOf(false) }
-    var dateFormatted by remember { mutableStateOf("Hoy, 10:42 AM") }
+    var dateFormatted by remember { mutableStateOf("Hoy, recién creado") }
     var todoItems by remember { mutableStateOf<List<TodoItem>>(emptyList()) }
-    var loadedNote by remember { mutableStateOf<Note?>(null) }
     var isSaving by remember { mutableStateOf(false) }
 
     LaunchedEffect(noteId) {
         if (noteId != null && noteId > 0) {
             val note = viewModel.getNoteById(noteId)
             if (note != null) {
-                loadedNote = note
                 currentNoteId = note.id
                 title = note.title
                 content = note.content
@@ -111,35 +107,36 @@ fun NoteDetailScreen(
         }
     }
 
-    // Helper to perform safe, non-duplicating save/update with loading animation
-    fun triggerSave() {
+    fun doSave() {
         isSaving = true
-        coroutineScope.launch {
-            val saved = viewModel.saveOrUpdateNote(
-                existingNoteId = currentNoteId,
-                title = title,
-                content = content,
-                imageUri = imageUri,
-                isTask = isTask,
-                isPinned = isPinned,
-                todoItems = todoItems
-            )
-            if (saved != null) {
+        viewModel.saveNote(
+            existingNoteId = currentNoteId,
+            title = title,
+            content = content,
+            imageUri = imageUri,
+            isTask = isTask,
+            isPinned = isPinned,
+            todoItems = todoItems,
+            onSaved = { saved ->
                 currentNoteId = saved.id
                 dateFormatted = saved.dateFormatted
+                isSaving = false
             }
-            delay(600)
-            isSaving = false
+        )
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            doSave()
         }
     }
 
-    // Photo Gallery Launcher
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
             imageUri = it.toString()
-            triggerSave()
+            doSave()
         }
     }
 
@@ -150,23 +147,22 @@ fun NoteDetailScreen(
                 isTask = isTask,
                 isPinned = isPinned,
                 onBackClick = {
-                    triggerSave()
+                    doSave()
                     onBackClick()
                 },
                 onToggleTaskMode = {
                     isTask = !isTask
-                    triggerSave()
+                    doSave()
                 },
                 onAddImage = { galleryLauncher.launch("image/*") },
                 onTogglePin = {
                     isPinned = !isPinned
-                    triggerSave()
+                    doSave()
                 },
                 onDelete = {
-                    currentNoteId?.let { id ->
-                        coroutineScope.launch {
-                            viewModel.getNoteById(id)?.let { viewModel.deleteNote(it) }
-                        }
+                    val id = currentNoteId
+                    if (id != null && id > 0) {
+                        viewModel.deleteNoteById(id)
                     }
                     onBackClick()
                 }
@@ -180,12 +176,13 @@ fun NoteDetailScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
-            // Status Badges ("Guardado automático" & "Editado hoy a las...")
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Auto-save badge with loading indicator animation
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
@@ -216,9 +213,8 @@ fun NoteDetailScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.weight(1f))
+                Spacer(modifier = Modifier.width(12.dp))
 
-                // Timestamp badge
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(20.dp))
@@ -243,7 +239,6 @@ fun NoteDetailScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Title TextField
             Box(modifier = Modifier.fillMaxWidth()) {
                 if (title.isEmpty()) {
                     Text(
@@ -257,7 +252,7 @@ fun NoteDetailScreen(
                     value = title,
                     onValueChange = {
                         title = it
-                        triggerSave()
+                        doSave()
                     },
                     textStyle = MaterialTheme.typography.titleLarge.copy(
                         color = TextPrimary,
@@ -271,12 +266,11 @@ fun NoteDetailScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Attached Image Card with Overlay Button
             if (imageUri != null) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(240.dp)
+                        .heightIn(min = 180.dp, max = 260.dp)
                         .clip(RoundedCornerShape(20.dp))
                         .background(DarkSurface)
                         .border(1.dp, DarkBorder, RoundedCornerShape(20.dp))
@@ -292,11 +286,10 @@ fun NoteDetailScreen(
                         )
                     }
 
-                    // Top Right Close (X) button to remove image
                     IconButton(
                         onClick = {
                             imageUri = null
-                            triggerSave()
+                            doSave()
                         },
                         modifier = Modifier
                             .align(Alignment.TopEnd)
@@ -313,7 +306,6 @@ fun NoteDetailScreen(
                         )
                     }
 
-                    // Bottom Floating Button: "Toca para ampliar en pantalla completa"
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
@@ -344,7 +336,6 @@ fun NoteDetailScreen(
                 Spacer(modifier = Modifier.height(20.dp))
             }
 
-            // Note Body Content TextField
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -362,7 +353,7 @@ fun NoteDetailScreen(
                     value = content,
                     onValueChange = {
                         content = it
-                        triggerSave()
+                        doSave()
                     },
                     textStyle = MaterialTheme.typography.bodyLarge.copy(
                         color = TextPrimary,
@@ -374,7 +365,6 @@ fun NoteDetailScreen(
                 )
             }
 
-            // Sub-tasks / Todo List Section
             if (isTask || todoItems.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
@@ -400,7 +390,7 @@ fun NoteDetailScreen(
                                     this[index] = item.copy(isDone = isChecked)
                                 }
                                 todoItems = updatedList
-                                triggerSave()
+                                doSave()
                             },
                             colors = CheckboxDefaults.colors(
                                 checkedColor = PrimaryCyan,
@@ -415,7 +405,7 @@ fun NoteDetailScreen(
                                     this[index] = item.copy(text = newText)
                                 }
                                 todoItems = updatedList
-                                triggerSave()
+                                doSave()
                             },
                             textStyle = MaterialTheme.typography.bodyMedium.copy(
                                 color = if (item.isDone) TextMuted else TextPrimary,
@@ -430,7 +420,7 @@ fun NoteDetailScreen(
                                     removeAt(index)
                                 }
                                 todoItems = updatedList
-                                triggerSave()
+                                doSave()
                             }
                         ) {
                             Icon(
@@ -449,7 +439,7 @@ fun NoteDetailScreen(
                         .clickable {
                             val newItem = TodoItem(UUID.randomUUID().toString(), "", false)
                             todoItems = todoItems + newItem
-                            triggerSave()
+                            doSave()
                         }
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -506,7 +496,6 @@ private fun NoteDetailTopBar(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // Note / Task mode toggle button
         IconButton(
             onClick = onToggleTaskMode,
             modifier = Modifier
@@ -523,7 +512,6 @@ private fun NoteDetailTopBar(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Add Image button
         IconButton(onClick = onAddImage) {
             Icon(
                 imageVector = Icons.Default.Image,
@@ -532,7 +520,6 @@ private fun NoteDetailTopBar(
             )
         }
 
-        // Working Pin note button
         IconButton(onClick = onTogglePin) {
             Icon(
                 imageVector = Icons.Default.PushPin,
@@ -541,7 +528,6 @@ private fun NoteDetailTopBar(
             )
         }
 
-        // Delete note button
         IconButton(onClick = onDelete) {
             Icon(
                 imageVector = Icons.Default.Delete,

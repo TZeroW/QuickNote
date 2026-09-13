@@ -50,7 +50,6 @@ fun ImageZoomScreen(
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // Image Canvas with Pinch-to-Zoom & Pan Gesture Detector
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -91,7 +90,6 @@ fun ImageZoomScreen(
             }
         }
 
-        // Top Navigation Bar (Back button)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -114,7 +112,6 @@ fun ImageZoomScreen(
             }
         }
 
-        // Floating Bottom Badge: "Pellizca para zoom o arrastra libremente"
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
