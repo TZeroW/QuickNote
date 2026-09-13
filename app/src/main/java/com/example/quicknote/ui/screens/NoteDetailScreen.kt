@@ -44,7 +44,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -82,13 +81,13 @@ fun NoteDetailScreen(
     onImageClick: (String) -> Unit
 ) {
     var currentNoteId by remember(noteId) { mutableStateOf(noteId) }
-    var title by remember { mutableStateOf("") }
-    var content by remember { mutableStateOf("") }
-    var imageUri by remember { mutableStateOf<String?>(null) }
-    var isTask by remember { mutableStateOf(initialIsTask) }
-    var isPinned by remember { mutableStateOf(false) }
-    var dateFormatted by remember { mutableStateOf("Hoy, recién creado") }
-    var todoItems by remember { mutableStateOf<List<TodoItem>>(emptyList()) }
+    var title by remember(noteId) { mutableStateOf("") }
+    var content by remember(noteId) { mutableStateOf("") }
+    var imageUri by remember(noteId) { mutableStateOf<String?>(null) }
+    var isTask by remember(noteId, initialIsTask) { mutableStateOf(initialIsTask) }
+    var isPinned by remember(noteId) { mutableStateOf(false) }
+    var dateFormatted by remember(noteId) { mutableStateOf("Hoy, recién creado") }
+    var todoItems by remember(noteId) { mutableStateOf<List<TodoItem>>(emptyList()) }
     var isSaving by remember { mutableStateOf(false) }
 
     LaunchedEffect(noteId) {
@@ -123,12 +122,6 @@ fun NoteDetailScreen(
                 isSaving = false
             }
         )
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            doSave()
-        }
     }
 
     val galleryLauncher = rememberLauncherForActivityResult(
